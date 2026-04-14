@@ -1,0 +1,11 @@
+# Build output
+*.ko
+*.zip
+
+# Editor
+*.swp
+*~
+.vscode/
+*.class
+*.dex
+*.Identifier

@@ -1,0 +1,7 @@
+id=f8_kpm_fix
+name=Headwolf F8 Suspend Fix
+version=v1.0
+versionCode=1
+author=zerofrip
+description=Fixes WDT reboot during sleep caused by mt6375 PMIC auxadc imix_r calibration failure aborting late suspend.
+updateJson=https://raw.githubusercontent.com/zerofrip/Headwolf_F8_KPM_Fix_APatch/refs/heads/master/update.json
