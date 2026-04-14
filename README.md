@@ -1,14 +1,17 @@
 # Headwolf F8 Suspend Fix (APatch Module)
 
-APatch module (v1.0) that loads `kpm_fix.ko` at boot to prevent **sleep-time WDT reboots** on the Headwolf F8 tablet (MT8792 / Dimensity 8300).
+APatch module (v2.0) that loads `kpm_fix.ko` at boot to prevent **sleep-time WDT reboots** and **SD card tuning failures** on the Headwolf F8 tablet (MT8792 / Dimensity 8300).
 
-## Problem
+## Problems
 
-The mt6375 PMIC auxadc driver fails `imix_r` calibration during late suspend, returning `-EIO`. This aborts the suspend cycle and causes rapid suspend/resume cycling that exhausts the hardware watchdog timer, triggering a forced reboot while the device is asleep.
+1. **WDT reboot during sleep** — The mt6375 PMIC auxadc driver fails `imix_r` calibration during late suspend, returning `-EIO`. This aborts the suspend cycle and causes rapid suspend/resume cycling that exhausts the hardware watchdog timer, triggering a forced reboot.
+2. **SD card CMD19 CRC error on resume** — After suspend/resume, MSDC controller PAD timing drifts. `msdc_execute_tuning()` sends CMD19 but receives CRC errors, triggering card reset and speed downgrade.
 
 ## Solution
 
-The kernel module (`kpm_fix.ko`) installs a kretprobe on `mt6375_auxadc_suspend_late` that replaces negative return values with `0`, allowing the suspend sequence to complete normally. The calibration still runs — only the error propagation is suppressed.
+The kernel module (`kpm_fix.ko`) installs two kretprobes:
+- **`mt6375_auxadc_suspend_late`** — Overrides negative returns to `0`, allowing suspend to proceed
+- **`msdc_execute_tuning`** — Overrides tuning failure returns to `0`, preserving valid PAD_TUNE values
 
 See [Headwolf_F8_KPM_Fix_Kernel](https://github.com/zerofrip/Headwolf_F8_KPM_Fix_Kernel) for technical details.
 
