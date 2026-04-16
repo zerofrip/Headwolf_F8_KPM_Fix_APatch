@@ -1,17 +1,17 @@
 # Headwolf F8 Suspend Fix (APatch Module)
 
-APatch module (v2.0) that loads `kpm_fix.ko` at boot to prevent **sleep-time WDT reboots** and **SD card tuning failures** on the Headwolf F8 tablet (MT8792 / Dimensity 8300).
+APatch module (v3.0) that loads `kpm_fix.ko` at boot to prevent **sleep-time WDT reboots** on the Headwolf F8 tablet (MT6897 / Dimensity 8300).
 
-## Problems
+## Problem
 
-1. **WDT reboot during sleep** — The mt6375 PMIC auxadc driver fails `imix_r` calibration during late suspend, returning `-EIO`. This aborts the suspend cycle and causes rapid suspend/resume cycling that exhausts the hardware watchdog timer, triggering a forced reboot.
-2. **SD card CMD19 CRC error on resume** — After suspend/resume, MSDC controller PAD timing drifts. `msdc_execute_tuning()` sends CMD19 but receives CRC errors, triggering card reset and speed downgrade.
+**WDT reboot during sleep** — The mt6375 PMIC auxadc driver fails `imix_r` calibration during late suspend, returning `-EIO`. This aborts the suspend cycle and causes rapid suspend/resume cycling (~every 2 minutes) that exhausts the hardware watchdog timer, triggering a forced reboot.
 
 ## Solution
 
-The kernel module (`kpm_fix.ko`) installs two kretprobes:
-- **`mt6375_auxadc_suspend_late`** — Overrides negative returns to `0`, allowing suspend to proceed
-- **`msdc_execute_tuning`** — Overrides tuning failure returns to `0`, preserving valid PAD_TUNE values
+The kernel module (`kpm_fix.ko`) installs a kretprobe on **`__device_suspend_late`** (a kernel PM framework function). When the mt6375 auxadc device is suspended and returns an error, the return value is overridden to `0`, allowing the suspend sequence to proceed normally.
+
+> **Why not hook `mt6375_auxadc_suspend_late` directly?**
+> GKI 6.1 uses `KPROBES_ON_FTRACE`, which requires ftrace entry points. Vendor modules lack these, so a direct kretprobe registers but never fires. Hooking the kernel-internal `__device_suspend_late` bypasses this limitation.
 
 See [Headwolf_F8_KPM_Fix_Kernel](https://github.com/zerofrip/Headwolf_F8_KPM_Fix_Kernel) for technical details.
 
@@ -45,7 +45,7 @@ See [Headwolf_F8_KPM_Fix_Kernel](https://github.com/zerofrip/Headwolf_F8_KPM_Fix
 | Item | Value |
 |------|-------|
 | Device | Headwolf F8 |
-| SoC | MT8792 (Dimensity 8300 / MT6897) |
+| SoC | MT6897 (Dimensity 8300) |
 | Kernel | 6.1 GKI |
 | Root | APatch / KernelSU |
 | PMIC | mt6375 |
