@@ -1,7 +1,7 @@
 id=f8_kpm_fix
 name=Headwolf F8 Suspend Fix
-version=v2.0
-versionCode=2
+version=v3.0
+versionCode=3
 author=zerofrip
 description=Fixes WDT reboot during sleep (mt6375 auxadc imix_r failure) and SD card CMD19 CRC tuning failure on resume.
 updateJson=https://raw.githubusercontent.com/zerofrip/Headwolf_F8_KPM_Fix_APatch/refs/heads/master/update.json
